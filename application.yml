@@ -36,3 +36,6 @@ logging:
   level:
     org.hibernate.SQL: DEBUG  # Log Hibernate SQL queries
     org.hibernate.type.descriptor.sql.BasicBinder: TRACE  # Log parameter bindings in SQL queries
+
+server:
+  port: 8081

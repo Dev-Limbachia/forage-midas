@@ -5,6 +5,7 @@ import com.jpmc.midascore.entity.TransactionRecord;
 import com.jpmc.midascore.entity.UserRecord;
 import com.jpmc.midascore.repository.UserRepository;
 import com.jpmc.midascore.repository.TransactionRepository;
+import com.jpmc.midascore.service.IncentiveService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -19,10 +20,12 @@ public class KafkaTransactionListener {
     private static final Logger logger = LoggerFactory.getLogger(KafkaTransactionListener.class);
     private final UserRepository userRepository;
     private final TransactionRepository transactionRepository;
+    private final IncentiveService incentiveService;
 
-    public KafkaTransactionListener(UserRepository userRepository, TransactionRepository transactionRepository) {
+    public KafkaTransactionListener(UserRepository userRepository, TransactionRepository transactionRepository, IncentiveService incentiveService) {
         this.userRepository = userRepository;
         this.transactionRepository = transactionRepository;
+        this.incentiveService = incentiveService;
     }
 
     @KafkaListener(topics = "${general.kafka-topic}")
@@ -38,18 +41,22 @@ public class KafkaTransactionListener {
             UserRecord recipient = recipientOpt.get();
 
             if (sender.getBalance() >= transaction.getAmount()) {
+                // Fetch incentive amount from Incentive API
+                float incentiveAmount = incentiveService.fetchIncentive(transaction);
+                logger.info("Incentive received: {}", incentiveAmount);
+
                 // Update balances
                 sender.setBalance(sender.getBalance() - transaction.getAmount());
-                recipient.setBalance(recipient.getBalance() + transaction.getAmount());
+                recipient.setBalance(recipient.getBalance() + transaction.getAmount() + incentiveAmount);
 
                 userRepository.updateBalance(sender.getId(), sender.getBalance());
                 userRepository.updateBalance(recipient.getId(), recipient.getBalance());
 
-                // Save transaction record
-                TransactionRecord record = new TransactionRecord(sender, recipient, transaction.getAmount());
+                // Save transaction record (including incentive)
+                TransactionRecord record = new TransactionRecord(sender, recipient, transaction.getAmount(), incentiveAmount);
                 transactionRepository.save(record);
 
-                logger.info("Transaction processed successfully.");
+                logger.info("Transaction processed successfully with incentive.");
             } else {
                 logger.info("Transaction failed: Insufficient funds.");
             }
