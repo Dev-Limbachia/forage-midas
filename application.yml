@@ -38,4 +38,4 @@ logging:
     org.hibernate.type.descriptor.sql.BasicBinder: TRACE  # Log parameter bindings in SQL queries
 
 server:
-  port: 8081
+  port: 33400
