@@ -13,3 +13,26 @@ spring:
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
     properties:
       spring.json.trusted.packages: com.jpmc.midascore.foundation
+
+  datasource:
+    url: jdbc:h2:mem:midasdb;DB_CLOSE_DELAY=-1  # Ensures database doesn't close on last connection
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+    platform: h2
+
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: update  # Automatically create/update tables
+    show-sql: true  # Log SQL statements for debugging
+
+  h2:
+    console:
+      enabled: true
+      path: /h2-console  # Access H2 console at http://localhost:8080/h2-console
+
+logging:
+  level:
+    org.hibernate.SQL: DEBUG  # Log Hibernate SQL queries
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE  # Log parameter bindings in SQL queries
